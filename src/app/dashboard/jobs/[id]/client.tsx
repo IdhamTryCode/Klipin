@@ -82,7 +82,7 @@ export default function JobDetailClient({ jobId }: { jobId: string }) {
       />
 
       <main className="mx-auto w-full max-w-4xl px-6 pt-12 pb-20">
-        <header className="mb-8 flex gap-5 items-start">
+        <header className="mb-8 flex gap-5 items-start"> 
           {job.thumbnail_url && (
             // eslint-disable-next-line @next/next/no-img-element
             <img
