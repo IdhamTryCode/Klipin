@@ -1,36 +1,56 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Klipin
 
-## Getting Started
+AI-powered clip finder untuk content creator. Kasih URL YouTube, dapet daftar momen viral + caption siap pakai dengan timestamp akurat.
 
-First, run the development server:
+Built with Next.js 16, Supabase, Inngest, dan Kimi K2.5.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Stack
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- **Next.js 16** (App Router) + TypeScript + Tailwind v4
+- **Supabase** — Auth + Postgres + RLS
+- **Inngest** — Background job pipeline (4-step durable execution)
+- **Kimi K2.5** (Moonshot AI) — primary, dengan fallback ke `kimi-k2-0905-preview`
+- **YouTube Data API v3** — metadata video
+- **youtube-transcript / Supadata** — transcript fetching
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Local Development
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Prerequisites
+- Node 20+
+- pnpm 10+
+- Akun Supabase, Moonshot, Google Cloud (YouTube Data API), Inngest
 
-## Learn More
+### Setup
 
-To learn more about Next.js, take a look at the following resources:
+1. Clone & install
+   ```bash
+   git clone https://github.com/<your-user>/klipin.git
+   cd klipin
+   pnpm install
+   ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+2. Copy env template & isi
+   ```bash
+   cp .env.example .env.local
+   ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+3. Apply database schema ke Supabase project kamu — SQL ada di history migration. Atau pakai Supabase CLI / dashboard SQL editor.
 
-## Deploy on Vercel
+4. Jalankan dev server (2 terminal)
+   ```bash
+   # Terminal 1
+   pnpm dev
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+   # Terminal 2 — Inngest dev server
+   pnpm dlx inngest-cli@latest dev -u http://localhost:3000/api/inngest
+   ```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+5. Buka http://localhost:3000
+
+## Production Deployment
+
+Lihat section "Production Deployment" di bawah.
+
+## License
+
+MIT
