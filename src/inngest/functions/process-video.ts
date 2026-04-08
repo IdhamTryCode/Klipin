@@ -18,7 +18,7 @@ export const processVideo = inngest.createFunction(
     triggers: [{ event: "klipin/video.submitted" }],
   },
   async ({ event, step }: { event: { data: { jobId: string; userId: string; videoId: string; customPrompt: string } }; step: { run: <T>(name: string, fn: () => Promise<T>) => Promise<T> } }) => {
-    const { jobId, userId, videoId, customPrompt } = event.data;
+    const { jobId, videoId, customPrompt } = event.data;
     const supabase = createServiceRoleClient();
 
     // Step 1: transcript
