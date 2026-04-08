@@ -27,9 +27,19 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Protect /dashboard
-  if (!user && request.nextUrl.pathname.startsWith("/dashboard")) {
+  const { pathname } = request.nextUrl;
+  const isAuthPage = pathname === "/login";
+  const isDashboard = pathname.startsWith("/dashboard");
+  const isRoot = pathname === "/";
+
+  // Not logged in → blokir dashboard
+  if (!user && isDashboard) {
     return NextResponse.redirect(new URL("/login", request.url));
+  }
+
+  // Sudah login → jangan biarin buka login lagi / landing
+  if (user && (isAuthPage || isRoot)) {
+    return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
   return response;

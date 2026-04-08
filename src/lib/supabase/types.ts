@@ -150,6 +150,7 @@ export type Database = {
         Row: {
           ai_model: string | null;
           ai_provider: string | null;
+          channel_name: string | null;
           created_at: string;
           credits_charged: number;
           custom_prompt: string | null;
@@ -161,6 +162,7 @@ export type Database = {
           processing_completed_at: string | null;
           processing_started_at: string | null;
           status: string;
+          thumbnail_url: string | null;
           updated_at: string;
           user_id: string;
           video_duration_seconds: number | null;
@@ -171,6 +173,7 @@ export type Database = {
         Insert: {
           ai_model?: string | null;
           ai_provider?: string | null;
+          channel_name?: string | null;
           created_at?: string;
           credits_charged?: number;
           custom_prompt?: string | null;
@@ -182,6 +185,7 @@ export type Database = {
           processing_completed_at?: string | null;
           processing_started_at?: string | null;
           status?: string;
+          thumbnail_url?: string | null;
           updated_at?: string;
           user_id: string;
           video_duration_seconds?: number | null;

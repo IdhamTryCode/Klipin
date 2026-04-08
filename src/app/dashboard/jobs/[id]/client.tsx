@@ -36,6 +36,8 @@ interface Job {
   error_message: string | null;
   credits_charged: number;
   video_duration_seconds: number | null;
+  channel_name: string | null;
+  thumbnail_url: string | null;
 }
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
@@ -80,16 +82,34 @@ export default function JobDetailClient({ jobId }: { jobId: string }) {
       />
 
       <main className="mx-auto w-full max-w-4xl px-6 pt-12 pb-20">
-        <header className="mb-8">
-          <div className="flex items-center gap-2 mb-3">
-            <StatusBadge status={job.status} />
-            <span className="text-xs text-fg-muted">
-              {job.credits_charged} kredit
-            </span>
+        <header className="mb-8 flex gap-5 items-start">
+          {job.thumbnail_url && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={job.thumbnail_url}
+              alt=""
+              className="w-40 aspect-video object-cover rounded-2xl border border-brand-400/15 shrink-0 hidden sm:block"
+            />
+          )}
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2 mb-3">
+              <StatusBadge status={job.status} />
+              <span className="text-xs text-fg-muted">
+                {job.credits_charged} kredit
+              </span>
+              {job.video_duration_seconds && (
+                <span className="text-xs text-fg-muted">
+                  · {Math.round(job.video_duration_seconds / 60)}m
+                </span>
+              )}
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight leading-tight">
+              {job.video_title || "Memuat judul..."}
+            </h1>
+            {job.channel_name && (
+              <p className="text-sm text-fg-muted mt-1.5">{job.channel_name}</p>
+            )}
           </div>
-          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight leading-tight">
-            {job.video_title || "Memuat judul..."}
-          </h1>
         </header>
 
         {isProcessing ? (

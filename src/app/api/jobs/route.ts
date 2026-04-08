@@ -74,6 +74,8 @@ export async function POST(req: Request) {
       youtube_video_id: videoId,
       video_title: metadata.title,
       video_duration_seconds: metadata.durationSeconds,
+      channel_name: metadata.channelTitle,
+      thumbnail_url: metadata.thumbnailUrl,
       custom_prompt: body.data.customPrompt,
       credits_charged: creditsRequired,
     })

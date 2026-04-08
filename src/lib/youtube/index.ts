@@ -26,6 +26,7 @@ export interface VideoMetadata {
   title: string;
   durationSeconds: number;
   thumbnailUrl: string;
+  channelTitle: string;
 }
 
 export async function fetchVideoMetadata(videoId: string): Promise<VideoMetadata> {
@@ -46,5 +47,6 @@ export async function fetchVideoMetadata(videoId: string): Promise<VideoMetadata
     durationSeconds: parseISO8601Duration(item.contentDetails.duration),
     thumbnailUrl:
       item.snippet.thumbnails?.high?.url || item.snippet.thumbnails?.default?.url,
+    channelTitle: item.snippet.channelTitle || "",
   };
 }
