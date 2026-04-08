@@ -4,11 +4,12 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Mail, Lock, ArrowLeft, CheckCircle2 } from "lucide-react";
+import { Mail, Lock, ArrowLeft, CheckCircle2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CardStrong } from "@/components/ui/card";
+import Logo from "@/components/Logo";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -94,13 +95,7 @@ export default function LoginPage() {
         </Link>
 
         <CardStrong className="p-8 sm:p-10">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="relative">
-              <div className="absolute inset-0 bg-brand-500 blur-md opacity-60" />
-              <Sparkles className="relative h-6 w-6 text-brand-300" />
-            </div>
-            <span className="text-xl font-bold tracking-tight">Klipin</span>
-          </div>
+          <Logo size={32} className="mb-2" />
 
           <AnimatePresence mode="wait">
             <motion.div
