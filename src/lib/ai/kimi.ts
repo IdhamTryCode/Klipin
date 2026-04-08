@@ -13,7 +13,7 @@ function getClient(): OpenAI {
   return _client;
 }
 
-async function callWithRetry<T>(fn: () => Promise<T>, maxAttempts = 4): Promise<T> {
+async function callWithRetry<T>(fn: () => Promise<T>, maxAttempts = 2): Promise<T> {
   let lastErr: unknown;
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {

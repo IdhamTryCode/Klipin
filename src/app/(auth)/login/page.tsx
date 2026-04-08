@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Mail, Lock, ArrowLeft } from "lucide-react";
+import { Sparkles, Mail, Lock, ArrowLeft, CheckCircle2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,24 +18,64 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setNotice(null);
 
-    const { error: err } =
-      mode === "signup"
-        ? await supabase.auth.signUp({ email, password })
-        : await supabase.auth.signInWithPassword({ email, password });
+    if (mode === "signup") {
+      const { data, error: err } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+      if (err) {
+        setError(err.message);
+        setLoading(false);
+        return;
+      }
+      // If email confirmation is required, session will be null
+      if (!data.session) {
+        setNotice(
+          "Akun dibuat! Kami sudah kirim email konfirmasi ke " +
+            email +
+            ". Cek inbox kamu untuk verifikasi sebelum login."
+        );
+        setLoading(false);
+        return;
+      }
+      // Auto-confirm enabled — langsung masuk
+      setNotice("Akun berhasil dibuat. Mengarahkan ke dashboard...");
+      setTimeout(() => {
+        router.push("/dashboard");
+        router.refresh();
+      }, 800);
+      return;
+    }
 
+    // Sign in
+    const { error: err } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
     if (err) {
-      setError(err.message);
+      setError(
+        err.message === "Invalid login credentials"
+          ? "Email atau password salah"
+          : err.message === "Email not confirmed"
+          ? "Email belum dikonfirmasi. Cek inbox kamu."
+          : err.message
+      );
       setLoading(false);
       return;
     }
-    router.push("/dashboard");
-    router.refresh();
+    setNotice("Login berhasil! Mengarahkan...");
+    setTimeout(() => {
+      router.push("/dashboard");
+      router.refresh();
+    }, 600);
   }
 
   return (
@@ -119,6 +159,17 @@ export default function LoginPage() {
                   {error}
                 </motion.p>
               )}
+              {notice && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="flex items-start gap-2 rounded-2xl border border-green-500/20 bg-green-500/5 p-3 text-sm text-green-300"
+                >
+                  <CheckCircle2 className="h-4 w-4 mt-0.5 shrink-0" />
+                  <span>{notice}</span>
+                </motion.div>
+              )}
             </AnimatePresence>
 
             <Button
@@ -140,6 +191,7 @@ export default function LoginPage() {
             onClick={() => {
               setMode(mode === "signin" ? "signup" : "signin");
               setError(null);
+              setNotice(null);
             }}
             className="w-full text-center text-sm text-fg-muted hover:text-brand-300 transition-colors mt-6"
           >
