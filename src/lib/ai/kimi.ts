@@ -1,10 +1,17 @@
 import OpenAI from "openai";
 import { SYSTEM_PROMPT, ClipsResponseSchema, type ClipsResponse } from "./schema";
 
-const client = new OpenAI({
-  apiKey: process.env.MOONSHOT_API_KEY,
-  baseURL: process.env.MOONSHOT_BASE_URL || "https://api.moonshot.ai/v1",
-});
+let _client: OpenAI | null = null;
+function getClient(): OpenAI {
+  if (_client) return _client;
+  const apiKey = process.env.MOONSHOT_API_KEY;
+  if (!apiKey) throw new Error("MOONSHOT_API_KEY is not set");
+  _client = new OpenAI({
+    apiKey,
+    baseURL: process.env.MOONSHOT_BASE_URL || "https://api.moonshot.ai/v1",
+  });
+  return _client;
+}
 
 async function callWithRetry<T>(fn: () => Promise<T>, maxAttempts = 4): Promise<T> {
   let lastErr: unknown;
@@ -27,7 +34,7 @@ async function callWithRetry<T>(fn: () => Promise<T>, maxAttempts = 4): Promise<
 
 async function callModel(model: string, messages: Array<{ role: "system" | "user"; content: string }>) {
   return callWithRetry(() =>
-    client.chat.completions.create({
+    getClient().chat.completions.create({
       model,
       messages,
       response_format: { type: "json_object" },
