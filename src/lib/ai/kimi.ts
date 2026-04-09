@@ -62,7 +62,17 @@ export async function callKimi(transcript: string, customPrompt: string) {
   }
 
   const content = res.choices[0]?.message?.content || "{}";
-  const parsed: ClipsResponse = ClipsResponseSchema.parse(JSON.parse(content));
+  const raw: unknown = JSON.parse(content);
+  // Tolerate models that return an array directly, or wrap clips under a different key.
+  let normalized: unknown = raw;
+  if (Array.isArray(raw)) {
+    normalized = { clips: raw };
+  } else if (raw && typeof raw === "object" && !("clips" in raw)) {
+    const obj = raw as Record<string, unknown>;
+    const arrayKey = Object.keys(obj).find((k) => Array.isArray(obj[k]));
+    if (arrayKey) normalized = { clips: obj[arrayKey] };
+  }
+  const parsed: ClipsResponse = ClipsResponseSchema.parse(normalized);
   return {
     provider: "kimi" as const,
     model: usedModel,
