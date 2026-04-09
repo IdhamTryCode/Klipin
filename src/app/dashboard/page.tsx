@@ -60,6 +60,16 @@ export default async function DashboardPage() {
               <p className="text-5xl font-bold mt-2 text-gradient-brand relative">
                 {profile?.credits_balance ?? 0}
               </p>
+              <a
+                href={`https://wa.me/6281329064923?text=${encodeURIComponent(
+                  `Halo, aku mau isi credit Klipin.\n\nEmail akun: ${profile?.email ?? ""}`
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="relative inline-flex items-center gap-1.5 mt-3 text-xs font-medium text-brand-400 hover:text-brand-300 transition-colors"
+              >
+                + Isi Kredit via WhatsApp →
+              </a>
             </CardStrong>
 
             <Card>

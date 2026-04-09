@@ -22,7 +22,7 @@ export async function POST(req: Request) {
 
   const body = BodySchema.safeParse(await req.json());
   if (!body.success)
-    return NextResponse.json({ error: "INVALID_BODY", details: body.error }, { status: 400 });
+    return NextResponse.json({ error: "INVALID_BODY" }, { status: 400 });
 
   const videoId = extractVideoId(body.data.youtubeUrl);
   if (!videoId)
@@ -32,8 +32,8 @@ export async function POST(req: Request) {
   try {
     metadata = await fetchVideoMetadata(videoId);
   } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : "UNKNOWN";
-    return NextResponse.json({ error: "YOUTUBE_FETCH_FAILED", message: msg }, { status: 400 });
+    console.error("YOUTUBE_FETCH_FAILED", e);
+    return NextResponse.json({ error: "YOUTUBE_FETCH_FAILED" }, { status: 400 });
   }
 
   if (metadata.durationSeconds > MAX_VIDEO_DURATION_SECONDS) {
