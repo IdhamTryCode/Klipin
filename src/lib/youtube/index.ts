@@ -34,7 +34,8 @@ export async function fetchVideoMetadata(videoId: string): Promise<VideoMetadata
   if (!key) throw new Error("YOUTUBE_API_KEY not set");
 
   const res = await fetch(
-    `${API_BASE}/videos?part=contentDetails,snippet&id=${videoId}&key=${key}`
+    `${API_BASE}/videos?part=contentDetails,snippet&id=${videoId}&key=${key}`,
+    { signal: AbortSignal.timeout(10_000) }
   );
   if (!res.ok) throw new Error(`YouTube API error: ${res.status}`);
   const data = await res.json();
