@@ -48,8 +48,7 @@ export async function POST(req: Request) {
       (transaction_status === "capture" && fraud_status === "accept"));
 
   if (isSettlement) {
-    // Add credits via RPC
-    await supabase.rpc("refund_credits", {
+    await supabase.rpc("topup_credits", {
       p_user_id: order.user_id,
       p_amount: order.credits_to_add,
       p_reference_id: order_id,

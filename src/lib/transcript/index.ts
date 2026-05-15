@@ -30,7 +30,7 @@ export async function fetchTranscriptSupadata(videoId: string): Promise<Transcri
   // Request structured (with timestamps), not text=true
   const res = await fetch(
     `https://api.supadata.ai/v1/youtube/transcript?videoId=${videoId}`,
-    { headers: { "x-api-key": key } }
+    { headers: { "x-api-key": key }, signal: AbortSignal.timeout(30_000) }
   );
   if (!res.ok) throw new Error(`Supadata error: ${res.status}`);
   const data = await res.json();
@@ -55,7 +55,12 @@ export async function fetchTranscriptSupadata(videoId: string): Promise<Transcri
 }
 
 export async function fetchTranscriptFallback(videoId: string): Promise<TranscriptResult> {
-  const items = await YoutubeTranscript.fetchTranscript(videoId);
+  const items = await Promise.race([
+    YoutubeTranscript.fetchTranscript(videoId),
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error("youtube-transcript timeout")), 30_000)
+    ),
+  ]);
   // youtube-transcript returns offset in milliseconds
   const segments: TranscriptSegment[] = items.map((i) => ({
     text: i.text,

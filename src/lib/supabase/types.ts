@@ -217,6 +217,15 @@ export type Database = {
         };
         Returns: number;
       };
+      topup_credits: {
+        Args: {
+          p_amount: number;
+          p_description: string;
+          p_reference_id: string;
+          p_user_id: string;
+        };
+        Returns: number;
+      };
     };
     Enums: { [_ in never]: never };
     CompositeTypes: { [_ in never]: never };

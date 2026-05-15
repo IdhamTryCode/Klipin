@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { NonRetriableError } from "inngest";
 import { SYSTEM_PROMPT, ClipsResponseSchema, type ClipsResponse } from "./schema";
 
 let _client: OpenAI | null = null;
@@ -9,6 +10,8 @@ function getClient(): OpenAI {
   _client = new OpenAI({
     apiKey,
     baseURL: process.env.MOONSHOT_BASE_URL || "https://api.moonshot.ai/v1",
+    timeout: 10 * 60 * 1000,
+    maxRetries: 0,
   });
   return _client;
 }
@@ -38,6 +41,8 @@ async function callModel(model: string, messages: Array<{ role: "system" | "user
       model,
       messages,
       response_format: { type: "json_object" },
+      max_tokens: 4000,
+      temperature: 0.3,
     })
   );
 }
@@ -49,20 +54,30 @@ export async function callKimi(transcript: string, customPrompt: string) {
     { role: "user" as const, content: userMsg },
   ];
 
-  let usedModel = "kimi-k2.5";
+  let usedModel = process.env.MOONSHOT_MODEL || "kimi-k2-0905-preview";
   let res;
   try {
     res = await callModel(usedModel, messages);
   } catch (e: unknown) {
     const status = (e as { status?: number })?.status;
+    if (status === 400 || status === 401 || status === 404) {
+      // Permanent error — don't retry the whole Inngest function.
+      throw new NonRetriableError(`Kimi rejected request (${status})`, { cause: e });
+    }
     if (status !== 429 && status !== 503) throw e;
-    console.warn("kimi-k2.5 still overloaded after retries, falling back to kimi-k2-0905-preview");
-    usedModel = "kimi-k2-0905-preview";
+    console.warn(`${usedModel} still overloaded after retries, falling back to kimi-k2.5`);
+    usedModel = "kimi-k2.5";
     res = await callModel(usedModel, messages);
   }
 
   const content = res.choices[0]?.message?.content || "{}";
-  const raw: unknown = JSON.parse(content);
+  let raw: unknown;
+  try {
+    raw = JSON.parse(content);
+  } catch (e) {
+    throw new NonRetriableError("Kimi returned invalid JSON", { cause: e });
+  }
+
   // Tolerate models that return an array directly, or wrap clips under a different key.
   let normalized: unknown = raw;
   if (Array.isArray(raw)) {
@@ -72,11 +87,15 @@ export async function callKimi(transcript: string, customPrompt: string) {
     const arrayKey = Object.keys(obj).find((k) => Array.isArray(obj[k]));
     if (arrayKey) normalized = { clips: obj[arrayKey] };
   }
-  const parsed: ClipsResponse = ClipsResponseSchema.parse(normalized);
+  const parsed = ClipsResponseSchema.safeParse(normalized);
+  if (!parsed.success) {
+    throw new NonRetriableError(`Kimi output failed schema: ${parsed.error.message}`);
+  }
+  const data: ClipsResponse = parsed.data;
   return {
     provider: "kimi" as const,
     model: usedModel,
-    clips: parsed.clips,
+    clips: data.clips,
     usage: {
       input: res.usage?.prompt_tokens,
       output: res.usage?.completion_tokens,

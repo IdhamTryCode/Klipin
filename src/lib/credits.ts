@@ -1,5 +1,6 @@
 export const MAX_VIDEO_DURATION_SECONDS = 10800; // 3 jam
-export const MAX_TOKEN_ESTIMATE = 200_000;
+// Kimi K2 context ~128k. Reserve ~8k for system prompt + output. Cap input at ~120k tokens.
+export const MAX_TOKEN_ESTIMATE = 120_000;
 
 export function calculateCreditsRequired(durationSeconds: number): number {
   const minutes = durationSeconds / 60;

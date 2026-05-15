@@ -1,3 +1,4 @@
+import { NonRetriableError } from "inngest";
 import { inngest } from "../client";
 import { fetchTranscript } from "@/lib/transcript";
 import { estimateTokenCount, MAX_TOKEN_ESTIMATE } from "@/lib/credits";
@@ -21,49 +22,62 @@ export const processVideo = inngest.createFunction(
     const { jobId, videoId, customPrompt } = event.data;
     const supabase = createServiceRoleClient();
 
-    // Step 1: transcript
-    const transcript = await step.run("fetch-transcript", async () => {
+    // Step 1: prepare transcript in DB cache + validate token count.
+    // We intentionally do NOT return transcript text — large step outputs are replayed
+    // across step boundaries by Inngest and add real latency. Subsequent steps read from cache.
+    const { tokens } = await step.run("prepare-transcript", async () => {
       const { data: cached } = await supabase
         .from("transcript_cache")
-        .select("transcript_text, transcript_language")
+        .select("transcript_text")
         .eq("youtube_video_id", videoId)
         .maybeSingle();
 
+      let text: string;
       if (cached) {
-        return { text: cached.transcript_text, language: cached.transcript_language };
+        text = cached.transcript_text;
+      } else {
+        try {
+          const result = await fetchTranscript(videoId);
+          text = result.text;
+          await supabase.from("transcript_cache").upsert({
+            youtube_video_id: videoId,
+            transcript_text: result.text,
+            transcript_language: result.language,
+            token_count_estimate: estimateTokenCount(result.text),
+          });
+        } catch (e) {
+          throw new NonRetriableError("TRANSCRIPT_UNAVAILABLE", { cause: e });
+        }
       }
 
-      const result = await fetchTranscript(videoId);
-      await supabase.from("transcript_cache").upsert({
-        youtube_video_id: videoId,
-        transcript_text: result.text,
-        transcript_language: result.language,
-        token_count_estimate: estimateTokenCount(result.text),
-      });
-      return { text: result.text, language: result.language };
-    });
-
-    // Step 2: validate
-    const formatted = await step.run("format-transcript", async () => {
-      const tokens = estimateTokenCount(transcript.text);
-      if (tokens > MAX_TOKEN_ESTIMATE) {
-        throw new Error(`TRANSCRIPT_TOO_LONG: ${tokens}`);
+      const t = estimateTokenCount(text);
+      if (t > MAX_TOKEN_ESTIMATE) {
+        throw new NonRetriableError(`TRANSCRIPT_TOO_LONG:${t}`);
       }
+
       await supabase
         .from("video_jobs")
         .update({ status: "processing", processing_started_at: new Date().toISOString() })
         .eq("id", jobId);
-      return { text: transcript.text, tokens };
-    });
 
-    // Step 3: AI
-    const aiResult = await step.run("ai-extract-clips", async () => {
-      return await callKimi(formatted.text, customPrompt);
+      return { tokens: t };
     });
+    void tokens;
 
-    // Step 4: save
-    await step.run("save-results", async () => {
-      const rows = aiResult.clips.map((c: { start_time_seconds: number; end_time_seconds: number; hook_text: string; reasoning: string; suggested_caption: string; virality_score: number }, idx: number) => ({
+    // Step 2: AI extraction + save. Reads transcript fresh from DB cache so the large text
+    // never crosses an Inngest step boundary. Combined with save to avoid passing the clips
+    // array (also large) through another boundary.
+    await step.run("extract-and-save", async () => {
+      const { data: cached } = await supabase
+        .from("transcript_cache")
+        .select("transcript_text")
+        .eq("youtube_video_id", videoId)
+        .single();
+      if (!cached) throw new NonRetriableError("TRANSCRIPT_CACHE_MISSING");
+
+      const aiResult = await callKimi(cached.transcript_text, customPrompt);
+
+      const rows = aiResult.clips.map((c, idx) => ({
         job_id: jobId,
         clip_index: idx + 1,
         start_time_seconds: c.start_time_seconds,
