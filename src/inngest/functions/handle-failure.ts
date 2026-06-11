@@ -3,18 +3,18 @@ import { createServiceRoleClient } from "@/lib/supabase/server";
 
 function mapError(raw: string): { code: string; message: string } {
   if (raw.startsWith("TRANSCRIPT_TOO_LONG")) {
-    return { code: "TRANSCRIPT_TOO_LONG", message: "Transcript video terlalu panjang untuk diproses" };
+    return { code: "TRANSCRIPT_TOO_LONG", message: "Video ini terlalu panjang untuk diproses saat ini. Coba pilih video yang lebih pendek. Kredit Anda telah dikembalikan." };
   }
   if (raw.includes("TRANSCRIPT_UNAVAILABLE") || raw.includes("transcript")) {
-    return { code: "TRANSCRIPT_UNAVAILABLE", message: "Tidak bisa mengambil transcript video. Pastikan video punya caption (CC)." };
+    return { code: "TRANSCRIPT_UNAVAILABLE", message: "Kami tidak dapat membaca transcript video ini. Pastikan video memiliki caption/subtitle (CC) aktif, lalu coba lagi. Kredit Anda telah dikembalikan." };
   }
   if (raw.includes("Request timed out") || raw.includes("timeout")) {
-    return { code: "TIMEOUT", message: "Proses memakan waktu terlalu lama. Coba lagi atau pakai video lebih pendek." };
+    return { code: "TIMEOUT", message: "Analisis video ini memerlukan waktu lebih lama dari biasanya, kemungkinan karena durasinya yang panjang. Silakan coba lagi, atau gunakan video yang lebih pendek untuk hasil lebih cepat. Kredit Anda telah dikembalikan." };
   }
   if (raw.includes("invalid JSON") || raw.includes("schema") || raw.includes("Kimi")) {
-    return { code: "AI_OUTPUT_INVALID", message: "AI gagal menghasilkan output valid. Silakan coba lagi." };
+    return { code: "AI_OUTPUT_INVALID", message: "Sistem AI sedang sibuk menganalisis video panjang dan belum dapat menyelesaikan permintaan ini. Silakan coba lagi sesaat lagi, atau gunakan video yang lebih pendek. Kredit Anda telah dikembalikan." };
   }
-  return { code: "UNKNOWN", message: "Job gagal diproses. Kredit dikembalikan." };
+  return { code: "UNKNOWN", message: "Terjadi kendala saat memproses video Anda. Silakan coba lagi sesaat lagi. Kredit Anda telah dikembalikan." };
 }
 
 export const handleJobFailure = inngest.createFunction(
