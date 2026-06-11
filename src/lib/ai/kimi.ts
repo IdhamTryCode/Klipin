@@ -42,7 +42,7 @@ async function callModel(model: string, messages: Array<{ role: "system" | "user
       messages,
       response_format: { type: "json_object" },
       max_tokens: 4000,
-      temperature: 0.3,
+      temperature: 1,
     })
   );
 }
