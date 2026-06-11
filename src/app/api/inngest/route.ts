@@ -2,8 +2,9 @@ import { serve } from "inngest/next";
 import { inngest } from "@/inngest/client";
 import { processVideo } from "@/inngest/functions/process-video";
 import { handleJobFailure } from "@/inngest/functions/handle-failure";
+import { keepAlive } from "@/inngest/functions/keep-alive";
 
 export const { GET, POST, PUT } = serve({
   client: inngest,
-  functions: [processVideo, handleJobFailure],
+  functions: [processVideo, handleJobFailure, keepAlive],
 });
