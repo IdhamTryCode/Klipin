@@ -41,10 +41,48 @@ async function callModel(model: string, messages: Array<{ role: "system" | "user
       model,
       messages,
       response_format: { type: "json_object" },
-      max_tokens: 8000,
+      max_tokens: 16000,
       temperature: 1,
     })
   );
+}
+
+// Recover clips from JSON that was truncated mid-output. Finds the last complete
+// clip object and closes the array, discarding the partial trailing object.
+function salvageClips(content: string): { clips: unknown[] } | null {
+  const start = content.indexOf('"clips"');
+  if (start === -1) return null;
+  const arrStart = content.indexOf("[", start);
+  if (arrStart === -1) return null;
+
+  let depth = 0;
+  let lastObjEnd = -1;
+  let inStr = false;
+  let esc = false;
+  for (let i = arrStart + 1; i < content.length; i++) {
+    const ch = content[i];
+    if (inStr) {
+      if (esc) esc = false;
+      else if (ch === "\\") esc = true;
+      else if (ch === '"') inStr = false;
+      continue;
+    }
+    if (ch === '"') inStr = true;
+    else if (ch === "{") depth++;
+    else if (ch === "}") {
+      depth--;
+      if (depth === 0) lastObjEnd = i;
+    }
+  }
+  if (lastObjEnd === -1) return null;
+
+  const repaired = content.slice(arrStart, lastObjEnd + 1) + "]";
+  try {
+    const arr = JSON.parse(repaired) as unknown[];
+    return Array.isArray(arr) && arr.length > 0 ? { clips: arr } : null;
+  } catch {
+    return null;
+  }
 }
 
 export async function callKimi(transcript: string, customPrompt: string) {
@@ -78,8 +116,15 @@ export async function callKimi(transcript: string, customPrompt: string) {
   try {
     raw = JSON.parse(content);
   } catch (e) {
-    console.error("Kimi unparseable output:", content.slice(0, 2000));
-    throw new NonRetriableError("Kimi returned invalid JSON", { cause: e });
+    // Output may be truncated at max_tokens (temperature 1 makes length unpredictable).
+    // Salvage the clips that did fully serialize by closing the array at the last complete object.
+    const salvaged = salvageClips(content);
+    if (salvaged) {
+      raw = salvaged;
+    } else {
+      console.error("Kimi unparseable output:", content.slice(0, 2000));
+      throw new NonRetriableError("Kimi returned invalid JSON", { cause: e });
+    }
   }
 
   // Tolerate models that return an array directly, or wrap clips under a different key.
