@@ -10,7 +10,7 @@ function getClient(): OpenAI {
   _client = new OpenAI({
     apiKey,
     baseURL: process.env.MOONSHOT_BASE_URL || "https://api.moonshot.ai/v1",
-    timeout: 10 * 60 * 1000,
+    timeout: 4 * 60 * 1000,
     maxRetries: 0,
   });
   return _client;
@@ -41,7 +41,7 @@ async function callModel(model: string, messages: Array<{ role: "system" | "user
       model,
       messages,
       response_format: { type: "json_object" },
-      max_tokens: 16000,
+      max_tokens: 8000,
       temperature: 1,
     })
   );
