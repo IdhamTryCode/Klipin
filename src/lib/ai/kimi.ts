@@ -54,7 +54,7 @@ export async function callKimi(transcript: string, customPrompt: string) {
     { role: "user" as const, content: userMsg },
   ];
 
-  let usedModel = process.env.MOONSHOT_MODEL || "kimi-k2.6";
+  let usedModel = process.env.MOONSHOT_MODEL || "kimi-k2.5";
   let res;
   try {
     res = await callModel(usedModel, messages);
@@ -65,8 +65,8 @@ export async function callKimi(transcript: string, customPrompt: string) {
       throw new NonRetriableError(`Kimi rejected request (${status})`, { cause: e });
     }
     if (status !== 429 && status !== 503) throw e;
-    console.warn(`${usedModel} still overloaded after retries, falling back to kimi-k2.5`);
-    usedModel = "kimi-k2.5";
+    console.warn(`${usedModel} still overloaded after retries, falling back to kimi-k2.6`);
+    usedModel = "kimi-k2.6";
     res = await callModel(usedModel, messages);
   }
 
