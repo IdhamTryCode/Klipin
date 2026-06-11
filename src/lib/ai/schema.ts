@@ -6,7 +6,7 @@ export const ClipSchema = z.object({
   hook_text: z.string().min(1),
   reasoning: z.string().optional().default(""),
   suggested_caption: z.string().optional().default(""),
-  virality_score: z.number().int().min(1).max(10),
+  virality_score: z.number().min(1).max(10).transform((n) => Math.round(n)),
 });
 
 export const ClipsResponseSchema = z.object({

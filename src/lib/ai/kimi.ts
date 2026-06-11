@@ -41,7 +41,7 @@ async function callModel(model: string, messages: Array<{ role: "system" | "user
       model,
       messages,
       response_format: { type: "json_object" },
-      max_tokens: 4000,
+      max_tokens: 8000,
       temperature: 1,
     })
   );
@@ -70,11 +70,15 @@ export async function callKimi(transcript: string, customPrompt: string) {
     res = await callModel(usedModel, messages);
   }
 
-  const content = res.choices[0]?.message?.content || "{}";
+  let content = res.choices[0]?.message?.content || "{}";
+  // Some models wrap JSON in a ```json ... ``` markdown fence despite json_object mode.
+  const fence = content.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (fence) content = fence[1].trim();
   let raw: unknown;
   try {
     raw = JSON.parse(content);
   } catch (e) {
+    console.error("Kimi unparseable output:", content.slice(0, 2000));
     throw new NonRetriableError("Kimi returned invalid JSON", { cause: e });
   }
 
@@ -89,6 +93,7 @@ export async function callKimi(transcript: string, customPrompt: string) {
   }
   const parsed = ClipsResponseSchema.safeParse(normalized);
   if (!parsed.success) {
+    console.error("Kimi raw output:", content.slice(0, 2000));
     throw new NonRetriableError(`Kimi output failed schema: ${parsed.error.message}`);
   }
   const data: ClipsResponse = parsed.data;
