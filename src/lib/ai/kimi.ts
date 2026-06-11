@@ -54,7 +54,7 @@ export async function callKimi(transcript: string, customPrompt: string) {
     { role: "user" as const, content: userMsg },
   ];
 
-  let usedModel = process.env.MOONSHOT_MODEL || "kimi-k2-0905-preview";
+  let usedModel = process.env.MOONSHOT_MODEL || "kimi-k2.6";
   let res;
   try {
     res = await callModel(usedModel, messages);
