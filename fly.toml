@@ -7,6 +7,10 @@ app = 'klipin'
 primary_region = 'sin'
 
 [build]
+  [build.args]
+    NEXT_PUBLIC_SUPABASE_URL = "https://aiohmmgyekvfzixjetar.supabase.co"
+    NEXT_PUBLIC_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpb2htbWd5ZWt2ZnppeGpldGFyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2MDQ1MTUsImV4cCI6MjA5MTE4MDUxNX0.t97-tuoITNCiRlVT5C-F4U2HvArcXcqbQZCA18qofBQ"
+    NEXT_PUBLIC_APP_URL = "https://klipin.fly.dev"
 
 [http_service]
   internal_port = 3000
