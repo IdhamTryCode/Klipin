@@ -2,11 +2,12 @@ import { inngest } from "../client";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 
 // Supabase free tier pauses a project after 7 days of inactivity.
-// This runs every 2 days with a trivial read to keep the project active.
+// This runs daily with a trivial read to keep the project active, leaving a
+// wide safety margin even if a run is occasionally skipped.
 export const keepAlive = inngest.createFunction(
   {
     id: "klipin-supabase-keep-alive",
-    triggers: [{ cron: "0 0 */2 * *" }],
+    triggers: [{ cron: "0 0 * * *" }],
   },
   async () => {
     const supabase = createServiceRoleClient();
